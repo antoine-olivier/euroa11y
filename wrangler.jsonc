@@ -1,0 +1,58 @@
+// Cloudflare Worker: public MCP endpoint on /mcp, scans in Browser Run (Workers Paid plan).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "euroa11y",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-09-30",
+  // nodejs_compat: required by @cloudflare/playwright. global_fetch_strictly_public: the Worker's fetch of a
+  // page goes out to the internet even for euroa11y.com, which otherwise answers 522 to its own Worker
+  // (audit A5-03); the scanned page is then served like for any visitor. enable_request_signal: request.signal
+  // aborts when the client goes away, and the scan then closes its browser early (audit A1-04).
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public", "enable_request_signal"],
+  // One public host, the one given to the directories: no workers.dev address, no preview URLs.
+  "routes": [{ "pattern": "euroa11y.com", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false,
+  // wrangler dev hands the Worker `http://euroa11y.com/…` by default, which src/worker/https.ts redirects
+  // in a loop (wrangler maps the Location back to localhost).
+  "dev": { "upstream_protocol": "https" },
+  // `remote`: wrangler dev uses the real Browser Run (the local Chrome of miniflare fails on Windows,
+  // 2026-10-04); no effect on a deployment.
+  "browser": { "binding": "BROWSER", "remote": true },
+  "durable_objects": {
+    "bindings": [{ "name": "QUOTA", "class_name": "DailyQuota" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DailyQuota"] }],
+  // Scan calls per client and minute, counted in each Cloudflare location (src/worker/index.ts, `gate`).
+  "ratelimits": [
+    { "name": "SCAN_RATE", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } },
+    { "name": "SCAN_RATE_SHARED", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
+  ],
+  // Usage count: one data point per POST /mcp request (method, tool, platform, status, scan result, durations;
+  // no address, no page, no identifier), kept 3 months by Cloudflare. Fields and queries: src/worker/metrics.ts,
+  // scripts/usage.mjs. Optional in the code: a run without the binding counts nothing.
+  "analytics_engine_datasets": [{ "binding": "METRICS", "dataset": "euroa11y_usage" }],
+  // axe-core is injected into the scanned page as source text.
+  // The site font (assets/fonts), the favicon and the PNG icon are bundled too.
+  "rules": [
+    { "type": "Text", "globs": ["**/axe.min.js"], "fallthrough": true },
+    { "type": "Text", "globs": ["**/*.svg"], "fallthrough": true },
+    { "type": "Data", "globs": ["**/*.woff2", "**/*.png"], "fallthrough": true }
+  ],
+  // DAILY_BROWSER_SECONDS: Browser Run budget of 50 $ a month (QCM of 2026-10-04): 10 h included, then
+  // 0.09 $ an hour, totalled per day and rounded to the hour. 64 000 s × 31 days ≈ 551 h, or 48.7 $ plus at
+  // most 1.4 $ of rounding. The Workers Paid subscription (5 $) comes on top.
+  "vars": {
+    "DAILY_BROWSER_SECONDS": "64000",
+    "POLICY_DATE": "2026-10-11"
+  },
+  // CPU time per request, waiting on the browser excluded; 30 s is the platform's default. Every browser protocol
+  // message is decoded here, so a page can raise it: a lower cap cut short would skip the scan's `finally`
+  // (slot and browser left to their expiry). Lower it to about 3 times the p99 that Workers Observability
+  // shows on heavy pages, once measured (second review, 2026-10-05).
+  "limits": { "cpu_ms": 30000 },
+  // OPENAI_APPS_CHALLENGE is a secret (wrangler secret put), set once OpenAI gives the token.
+  // Only the Worker's own log lines (no scanned address): no invocation logs (request metadata) and no
+  // traces (their fetch spans would carry the scanned address), so the privacy page stays true.
+  "observability": { "enabled": true, "logs": { "invocation_logs": false }, "traces": { "enabled": false } }
+}

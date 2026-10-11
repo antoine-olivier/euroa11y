@@ -1,0 +1,7 @@
+node_modules/
+# Local scan outputs and test runs: never versioned
+.private/
+out/
+.wrangler/
+# Local Worker secrets
+.dev.vars

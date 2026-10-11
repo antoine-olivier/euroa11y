@@ -1,0 +1,33 @@
+{
+  "name": "a11y-scan",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "MCP server for ChatGPT and Claude: automated accessibility scan of a web page, grouped by WCAG 2.2 success criterion, with optional RGAA 4.1.2 mapping, and European Accessibility Act scope check.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test --experimental-test-module-mocks \"test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.worker.json",
+    "check": "npm run typecheck && npm test",
+    "scan": "node src/cli.ts",
+    "catalog": "node scripts/axe-catalog.mjs",
+    "mcp:http": "node src/mcp/serve-http.ts",
+    "essai:chatgpt": "node src/mcp/serve-http.ts --tunnel"
+  },
+  "dependencies": {
+    "@cloudflare/playwright": "1.3.6",
+    "@modelcontextprotocol/server": "2.2.0",
+    "axe-core": "4.13.0",
+    "playwright-core": "1.63.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261004.1",
+    "@types/node": "24.19.0",
+    "typescript": "7.0.2",
+    "wrangler": "4.147.0"
+  }
+}

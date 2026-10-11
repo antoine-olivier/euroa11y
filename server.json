@@ -1,0 +1,18 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.euroa11y/euroa11y",
+  "title": "EuroA11y",
+  "description": "Accessibility audit of a web page (WCAG 2.2 AA, RGAA) and European Accessibility Act scope check",
+  "version": "0.2.0",
+  "websiteUrl": "https://euroa11y.com",
+  "repository": {
+    "url": "https://github.com/antoine-olivier/euroa11y",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://euroa11y.com/mcp"
+    }
+  ]
+}
