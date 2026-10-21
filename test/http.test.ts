@@ -101,6 +101,12 @@ test("refuses an unknown argument instead of ignoring it", async () => {
   assert.match(text, /pages/);
 });
 
+test("refuses an oversized argument payload before parsing it", async () => {
+  const response = await rpc("tools/call", { name: "scan_page", arguments: { url: `${siteBase}/checkout`, padding: Array.from({ length: 100 }, (_, index) => index) } });
+  assert.ok(response.error || response.result?.isError, "an error, not a scan");
+  assert.match(response.error?.message ?? response.result?.content?.[0]?.text ?? "", /maximum of 64 elements/);
+});
+
 test("answers the EAA question with a result that matches its output schema", async () => {
   const result = (await rpc("tools/call", { name: "check_eaa_scope", arguments: { sector: "e_commerce", sells_to_eu_consumers: true, employees: 6, annual_turnover_eur: 1_200_000 } })).result;
   assert.notEqual(result.isError, true, result.content?.[0]?.text);

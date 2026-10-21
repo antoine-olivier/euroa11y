@@ -68,6 +68,8 @@ export function createMcpServer(options: McpOptions): McpServer {
       capabilities: { tools: { listChanged: false } },
       instructions: SERVER_INSTRUCTIONS,
       cacheHints: { "tools/list": ONE_HOUR, "server/discover": ONE_HOUR },
+      // Both tools take a handful of scalar arguments: a larger payload is refused before parsing (SDK 2.3.0).
+      maxToolInputElements: 64,
     },
   );
 
