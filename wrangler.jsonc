@@ -2,6 +2,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "euroa11y",
+  // Account of contact@eclipsemission.com: a deploy from another Cloudflare login fails instead of landing elsewhere.
+  "account_id": "852eb1049a56acd7c8f13c9bd9642451",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-09-30",
   // nodejs_compat: required by @cloudflare/playwright. global_fetch_strictly_public: the Worker's fetch of a
