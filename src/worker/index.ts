@@ -21,7 +21,7 @@ import { callerOf, createRangeList, type Caller } from "../callers.ts";
 import { createDohHostCheck } from "../dns-doh.ts";
 import { createHttpEntry, jsonRpcError, type HttpEntry } from "../mcp/http.ts";
 import { createMcpServer } from "../mcp/server.ts";
-import { docsPage, FAVICON_PATH, FONT_PATH, homePage, ICON_PATH, MONO_FONT_PATH, notFoundPage, privacyPage, termsPage } from "../pages.ts";
+import { docsPage, FAVICON_PATH, FONT_PATH, homePage, ICON_PATH, MONO_FONT_PATH, notFoundPage, privacyPage, rgaaWcagPage, termsPage } from "../pages.ts";
 import { buildRgaaIndex, type RgaaData } from "../rgaa-index.ts";
 import type { ScanRequest } from "../scan-core.ts";
 import type { Admission, BudgetLimits } from "./budget.ts";
@@ -220,7 +220,10 @@ function pageRoute(request: Request, url: URL, env: Env): Response | undefined {
       return homePage(`${url.origin}${MCP_PATH}`);
     case "/docs":
       return docsPage(`${url.origin}${MCP_PATH}`);
+    case "/rgaa-wcag":
+      return rgaaWcagPage(rgaaData as RgaaData);
     case "/docs/":
+    case "/rgaa-wcag/":
     case "/privacy/":
     case "/terms/":
       return Response.redirect(`${url.origin}${url.pathname.slice(0, -1)}`, 308);

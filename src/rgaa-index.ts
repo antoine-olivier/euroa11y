@@ -11,6 +11,8 @@ export interface RgaaCriterion {
 
 export interface RgaaData {
   source: string;
+  /** Date the file was read from its source, `YYYY-MM-DD`. */
+  read_on?: string;
   version: string;
   criteria: RgaaCriterion[];
 }

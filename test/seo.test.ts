@@ -1,18 +1,24 @@
 // Search and AI discovery: robots.txt, sitemap.xml and llms.txt agree with the pages the site serves, and every
 // page carries its title, description, canonical address and Open Graph tags. The home page adds JSON-LD.
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { BRAND } from "../src/brand.ts";
-import { COPY_SCRIPT, docsPage, homePage, notFoundPage, privacyPage, termsPage } from "../src/pages.ts";
+import { COPY_SCRIPT, docsPage, homePage, notFoundPage, privacyPage, rgaaWcagPage, termsPage } from "../src/pages.ts";
+import { RGAA_DATA_PATH } from "../src/rgaa.ts";
+import type { RgaaData } from "../src/rgaa-index.ts";
 import { PUBLIC_PATHS, llmsTxt, robotsTxt, seoFile, sitemapXml } from "../src/worker/seo.ts";
 
 const MCP = "https://euroa11y.com/mcp";
+const RGAA = JSON.parse(readFileSync(RGAA_DATA_PATH, "utf8")) as RgaaData;
 const render = (path: string): Response => {
   switch (path) {
     case "/":
       return homePage(MCP);
     case "/docs":
       return docsPage(MCP);
+    case "/rgaa-wcag":
+      return rgaaWcagPage(RGAA);
     case "/privacy":
       return privacyPage("2026-10-04");
     case "/terms":
@@ -102,6 +108,13 @@ test("the only executable script of each page is the copy script", async () => {
     const executable = [...html.matchAll(/<script(?![^>]*type="application\/ld\+json")[^>]*>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
     assert.deepEqual(executable, [COPY_SCRIPT], path);
   }
+});
+
+// Audit n° 29: /rgaa-wcag is a public page of the sitemap, linked from llms.txt.
+test("the sitemap and llms.txt list /rgaa-wcag", () => {
+  assert.ok(PUBLIC_PATHS.includes("/rgaa-wcag"));
+  assert.ok(sitemapXml().includes(`<loc>${BRAND.site}/rgaa-wcag</loc>`));
+  assert.ok(llmsTxt().includes(`(${BRAND.site}/rgaa-wcag)`));
 });
 
 // Audit n° 27: RFC 9116 file. Two required fields (Contact, Expires), the date still ahead and under a year.

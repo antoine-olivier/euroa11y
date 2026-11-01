@@ -4,7 +4,7 @@
 import { BRAND } from "../brand.ts";
 
 /** Public pages the Worker serves with status 200, in sitemap order. Test: test/seo.test.ts renders each one. */
-export const PUBLIC_PATHS = ["/", "/docs", "/privacy", "/terms"] as const;
+export const PUBLIC_PATHS = ["/", "/docs", "/rgaa-wcag", "/privacy", "/terms"] as const;
 
 const MCP_PATH = "/mcp";
 const absolute = (path: string): string => `${BRAND.site}${path}`;
@@ -67,6 +67,7 @@ If the assistant answers without ${name}, name it in the request.
 
 - [Home](${absolute("/")}): what ${name} does and how to add it to Claude or ChatGPT
 - [Documentation](${absolute("/docs")}): connection steps, parameters, verdicts and limits
+- [RGAA 4.1.2 and WCAG 2.2](${absolute("/rgaa-wcag")}): which RGAA criteria relate to each WCAG 2.2 level A and AA criterion ("related", not "equivalent")
 - [Privacy policy](${absolute("/privacy")}): what the service receives, why and for how long
 - [Terms of use](${absolute("/terms")}): a free, informational service
 `;

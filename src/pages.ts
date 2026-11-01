@@ -7,7 +7,8 @@
 import { AXE_CATALOG_VERSION, axeRule, axeRuleIds } from "./axe-catalog.ts";
 import { BRAND } from "./brand.ts";
 import { RESCAN_AFTER_MS } from "./scan-core.ts";
-import { CRITERIA, WCAG22_AA_TAGS, compareCriteria, criteriaFromTags, describeCriterion } from "./wcag.ts";
+import type { RgaaCriterion, RgaaData } from "./rgaa-index.ts";
+import { CRITERIA, NEW_IN_WCAG22, WCAG22_AA_TAGS, compareCriteria, criteriaFromTags, describeCriterion } from "./wcag.ts";
 
 /** Atkinson Hyperlegible Next, variable weight, Latin subset, from @fontsource-variable 5.3.0 (OFL, assets/fonts). */
 export const FONT_PATH = "/fonts/atkinson-next-5.3.0.woff2";
@@ -19,8 +20,8 @@ export const ICON_PATH = "/icon-512.png";
 
 // Copy buttons: each names the element whose text it copies. Any change to this text changes its hash:
 // test/pages.test.ts checks it.
-export const COPY_SCRIPT = `const s=document.getElementById("copy-status");for(const b of document.querySelectorAll("button[data-copy]")){const t=document.getElementById(b.dataset.copy),l=b.textContent;if(!navigator.clipboard||!t){b.hidden=true;continue}b.addEventListener("click",async()=>{let ok=1;try{await navigator.clipboard.writeText(t.textContent.trim());b.textContent="Copied";b.dataset.done="";s.textContent=b.dataset.say}catch{ok=0;b.textContent="Failed";s.textContent="Copy failed. Select the text and copy it."}setTimeout(()=>{b.textContent=l;delete b.dataset.done;if(ok)s.textContent=""},2500)})}`;
-export const COPY_SCRIPT_HASH = "sha256-JJrGHe+XbAsoGQdtAO1ZLBgLhnJPOSoClnr8xSed4Bc=";
+export const COPY_SCRIPT = `const s=document.getElementById("copy-status");let n=0;for(const b of document.querySelectorAll("button[data-copy]")){const t=document.getElementById(b.dataset.copy),l=b.textContent;if(!navigator.clipboard||!t){b.hidden=true;continue}b.addEventListener("click",async()=>{const c=++n;let ok=1;try{await navigator.clipboard.writeText(t.textContent.trim());b.textContent="Copied";b.dataset.done="";s.textContent=b.dataset.say}catch{ok=0;b.textContent="Failed";s.textContent="";setTimeout(()=>{if(c==n)s.textContent="Copy failed. Select the text and copy it."},50)}setTimeout(()=>{b.textContent=l;delete b.dataset.done;if(ok&&c==n)s.textContent=""},2500)})}`;
+export const COPY_SCRIPT_HASH = "sha256-YYYCZMNxvewFyQPSTUPHlZO+LC6G3DzJiLsrUwzJIiw=";
 
 // The pages use no powerful API; clipboard-write stays allowed for the Copy buttons.
 const PERMISSIONS = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=(), display-capture=(), browsing-topics=()";
@@ -233,6 +234,10 @@ tr:target td{background:var(--mark)}
 .toc{order:2;position:sticky;top:24px;margin-top:64px;border-left:4px solid var(--yellow);padding:4px 0 4px 18px}.toc p{margin:0 0 6px;font-weight:700;font-size:.95rem}
 .toc ul{margin:0;padding:0;list-style:none;font-size:.95rem}.toc li{margin:0}.toc a{display:inline-block;padding:4px 0}
 .dated{color:var(--soft)}
+.map{margin-block:8px 88px;padding:clamp(24px,4vw,56px)}.map h2{font-size:clamp(1.6rem,1.3rem + 1vw,2.15rem);margin:2em 0 .5em}.map h2:first-child{margin-top:0}.map>p{max-width:62ch;overflow-wrap:anywhere}
+.map table{margin-top:12px}.map th[scope=row]{width:36%;font-size:1rem;font-weight:400;color:var(--ink);padding:13px 16px 13px 0;border-bottom:1px solid var(--rule);vertical-align:baseline}.map th[scope=row] small{display:block;color:var(--soft);font-size:.85rem;margin-top:2px}.map td{text-align:left}
+.map ul{margin:0;padding:0;list-style:none}.map td li{margin:0 0 .5em}.map td li:last-child{margin:0}.map .rid{font:700 1rem var(--mono);color:var(--accent);margin-right:6px}.none{color:var(--soft)}
+@media (max-width:600px){.map th[scope=row]{width:42%}}
 .lost{margin-block:8px 96px;padding:clamp(24px,4vw,48px);max-width:46rem}.lost ul{padding-left:1.2em}
 footer{color:var(--mist);font-size:.95rem}footer .wrap{background:linear-gradient(var(--rule),var(--rule)) top center/calc(100% - 2*var(--gutter)) 1px no-repeat;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 40px;padding-block:32px}footer p{margin:0 0 4px}footer a{color:#fff}footer nav{display:flex;gap:0 22px;flex-wrap:wrap}
 @media (forced-colors:active){.pick input:checked+label{forced-color-adjust:none;background:Highlight;color:HighlightText}.ring .auto,.ring .manual{stroke:CanvasText}.ring .fail{stroke:Highlight}.ring a:is(:hover,:focus-visible) .fail{stroke:LinkText}.ring .p{fill:CanvasText}.legend i{background:CanvasText}.legend .fail{background:Highlight}.bar nav a[aria-current=page]{text-decoration:underline}code{border:1px solid CanvasText}}
@@ -250,7 +255,7 @@ tr:target td{animation:mark 2s ease-out both}}
 @media (max-width:340px){.brand{font-size:1.1rem}.bar nav{gap:0 10px;font-size:.8125rem}}
 @media (max-width:420px){.url{flex-direction:column;width:100%}.url code{font-size:1.05rem;padding:14px 16px}.url button{border-left:0;border-top:2px solid var(--navy);padding:12px;border-radius:0 0 3px 3px}}`;
 
-type Path = "/" | "/docs" | "/privacy" | "/terms";
+type Path = "/" | "/docs" | "/privacy" | "/terms" | "/rgaa-wcag";
 
 // Search and sharing metadata. The canonical address is the public site, whatever host served the page. The not-found
 // page (current null) has no canonical and asks not to be indexed. One language, so no hreflang.
@@ -294,7 +299,7 @@ ${seoHead(title, description, current)}
 <body><a class="skip" href="#main">Skip to content</a>
 <header class="blue site"><div class="wrap bar"><a class="brand" href="/"${current === "/" ? ' aria-current="page"' : ""}>EuroA<span>11</span>y</a><nav aria-label="Site">${link("/docs", "Documentation")}${link("/privacy", "Privacy")}${link("/terms", "Terms")}</nav></div></header>
 <main id="main">${body}</main>
-<footer><div class="wrap"><div><p>Independent service, not affiliated with the European Union or any EU institution.</p><p>Published by ${escapeHtml(BRAND.publisher)}, ${escapeHtml(BRAND.country)}. Contact: <a href="mailto:${BRAND.contactEmail}">${BRAND.contactEmail}</a></p></div><nav aria-label="Footer"><a href="/docs">Documentation</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer>
+<footer><div class="wrap"><div><p>Independent service, not affiliated with the European Union or any EU institution.</p><p>Published by ${escapeHtml(BRAND.publisher)}, ${escapeHtml(BRAND.country)}. Contact: <a href="mailto:${BRAND.contactEmail}">${BRAND.contactEmail}</a></p></div><nav aria-label="Footer"><a href="/docs">Documentation</a><a href="/rgaa-wcag">RGAA and WCAG</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer>
 <p class="sr-only" role="status" id="copy-status"></p><script>${COPY_SCRIPT}</script></body></html>`;
   return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": status === 200 ? "public, max-age=3600" : "no-store", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "permissions-policy": PERMISSIONS, "cross-origin-opener-policy": "same-origin", "content-security-policy": CSP } });
 }
@@ -441,7 +446,7 @@ ${CHATGPT_STEPS}
 <h3>Parameters</h3>
 <ul><li><code>url</code> (required): the page address. A bare domain such as <code>example.com</code> is read as https://.</li>
 <li><code>viewport</code>: <code>desktop</code> (1280×800, default) or <code>mobile</code> (390×844).</li>
-<li><code>include_rgaa</code>: add the related criteria of RGAA 4.1.2, the French accessibility framework, to each WCAG criterion. RGAA 4.1.2 follows WCAG 2.1, so criteria new in WCAG 2.2 have no RGAA match.</li>
+<li><code>include_rgaa</code>: add the related criteria of RGAA 4.1.2, the French accessibility framework, to each WCAG criterion. RGAA 4.1.2 follows WCAG 2.1, so criteria new in WCAG 2.2 have no RGAA match. <a href="/rgaa-wcag">See the full table</a>.</li>
 <li><code>include_best_practices</code>: also run axe best-practice rules, which are not WCAG requirements.</li>
 <li><code>max_examples</code>: failing elements shown per rule, 1 to 5 (2 by default).</li>
 <li><code>fresh</code>: scan the page again instead of reusing a recent result, for example after fixing it. Accepted once the earlier scan is ${RESCAN_AFTER_MS / 60_000} minutes old.</li></ul>
@@ -486,6 +491,49 @@ ${CHATGPT_STEPS}
 <h2 id="support">Support</h2>
 <p>Questions, a wrong result or a page that should scan: <a href="mailto:${BRAND.contactEmail}">${BRAND.contactEmail}</a></p>
 </div></div>`);
+}
+
+/**
+ * /rgaa-wcag (audit n° 29): the level A and AA criteria of WCAG 2.2 against the criteria of RGAA 4.1.2 that data/rgaa-4.1.2-wcag.json
+ * relates to them. Built from that file, which the Worker bundles and the tests read; no figure typed here.
+ * "Related", never "equivalent": the page claims no legal equivalence and no conformance.
+ */
+export function rgaaWcagPage(data: RgaaData): Response {
+  const bySc = new Map<string, RgaaCriterion[]>();
+  for (const criterion of data.criteria) for (const sc of criterion.wcag) bySc.set(sc, [...(bySc.get(sc) ?? []), criterion]);
+  const related = AA_CRITERIA.filter((sc) => bySc.has(sc)).length;
+  const rgaaTotal = data.criteria.length;
+  const newInTwo = AA_CRITERIA.filter((sc) => NEW_IN_WCAG22.has(sc));
+  const cell = (sc: string) => {
+    const list = bySc.get(sc);
+    if (!list) return `<span class="none">${NEW_IN_WCAG22.has(sc) ? "None: new in WCAG 2.2, after the WCAG 2.1 that RGAA 4.1.2 follows." : "None in the data."}</span>`;
+    return `<ul role="list">${list.map((criterion) => `<li><span class="rid">${escapeHtml(criterion.id)}</span><span lang="fr">${escapeHtml(criterion.title)}</span></li>`).join("")}</ul>`;
+  };
+  const tables = PRINCIPLES.map((principle, index) => {
+    const rows = AA_CRITERIA.filter((sc) => sc.startsWith(`${index + 1}.`))
+      .map((sc) => {
+        const { name, level } = describeCriterion(sc);
+        return `<tr id="${scId(sc)}"><th scope="row"><span class="sc-n">${sc}</span> ${escapeHtml(name)}<small>Level ${level}</small></th><td>${cell(sc)}</td></tr>`;
+      })
+      .join("");
+    return `<h2 id="p${index + 1}">${index + 1}. ${principle}</h2>
+<table aria-labelledby="p${index + 1}"><thead><tr><th scope="col">WCAG 2.2 success criterion</th><th scope="col">Related RGAA 4.1.2 criteria</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }).join("\n");
+  return layout(
+    `RGAA 4.1.2 and WCAG 2.2 criteria | ${BRAND.name}`,
+    `Which RGAA 4.1.2 criteria relate to each WCAG 2.2 level A and AA success criterion. The link is "related", not "equivalent".`,
+    "/rgaa-wcag",
+    `${pageHead("RGAA 4.1.2 and WCAG 2.2: related criteria", `RGAA is the French accessibility framework. This table lists, for each WCAG 2.2 success criterion at level A or AA, the RGAA 4.1.2 criteria related to it.`)}
+<div class="wrap"><div class="map sheet">
+<h2 id="read">How to read it</h2>
+<p>The link is <strong>related</strong>, not <strong>equivalent</strong>. One WCAG criterion maps to several RGAA criteria, and each RGAA criterion has its own tests, which can be stricter or narrower than the WCAG criterion. Passing one side does not show that the other is met.</p>
+<p>${related} of the ${AA_CRITERIA.length} level A and AA criteria of WCAG 2.2 have at least one related criterion among the ${rgaaTotal} of RGAA 4.1.2. The ${newInTwo.length} criteria added in WCAG 2.2 (${newInTwo.join(", ")}) have none, because RGAA 4.1.2 follows WCAG 2.1. Criterion 4.1.1, removed in WCAG 2.2, is left out.</p>
+<p>This page gives information. It is not legal advice, states no legal equivalence between the two frameworks and says nothing about the conformance of any site. RGAA criterion titles are in French, their original language.</p>
+${tables}
+<h2 id="source">Source</h2>
+<p class="src">RGAA 4.1.2 criteria and their WCAG references: <a href="${escapeHtml(data.source)}">${escapeHtml(data.source)}</a> (DISIC, French government), file read on ${longDate(data.read_on ?? "")}. WCAG 2.2 criterion names and levels: <a href="https://www.w3.org/TR/WCAG22/">W3C Recommendation</a>. The <code>include_rgaa</code> option of <code>scan_page</code> uses this same data: see the <a href="/docs#scan-page">documentation</a>.</p>
+</div></div>`,
+  );
 }
 
 // Each statement must match the code and the Cloudflare set-up, as read on 2026-10-05: Worker log lines hold

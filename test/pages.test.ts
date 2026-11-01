@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { test } from "node:test";
 import { COPY_SCRIPT, COPY_SCRIPT_HASH, FONT_PATH, MONO_FONT_PATH, docsPage, homePage, notFoundPage, privacyPage, termsPage } from "../src/pages.ts";
 
+
 test("the CSP hash matches the copy script", () => {
   assert.equal(COPY_SCRIPT_HASH, `sha256-${createHash("sha256").update(COPY_SCRIPT, "utf8").digest("base64")}`);
 });
@@ -63,11 +64,50 @@ test("an unknown address gets an HTML page with status 404, not cached", async (
   assert.ok(!html.includes('aria-current="page"'));
 });
 
-// Audit A5-14: the "Copy failed" message stays in the live region until the next click; only a success is cleared.
-test("the copy script keeps its failure message and clears only a success message", () => {
-  const timer = COPY_SCRIPT.slice(COPY_SCRIPT.indexOf("setTimeout"));
-  assert.ok(timer.includes("if(ok)s.textContent=\"\""), "only a success message is cleared");
-  assert.ok(COPY_SCRIPT.includes("catch{ok=0;"), "a failure marks the click as failed");
+// A5-14 (audit 2026-10-05): the button label comes back after 2.5 s, but the "Copy failed" message stays in the
+// live region until the next click, so a screen reader user who missed it can still read it.
+// The test runs COPY_SCRIPT against a stub DOM with a fake clock and records every write to the live region.
+async function clickCopy(outcomes: boolean[], clicksAt: number[]): Promise<string[]> {
+  const log: string[] = [];
+  const timers: { at: number; run: () => void; done: boolean }[] = [];
+  let now = 0;
+  let clicked: (() => Promise<void>) | undefined;
+  const status = { set textContent(value: string) { log.push(`${now}:${value}`); } };
+  const button = { dataset: { copy: "c", say: "Copied." }, textContent: "Copy", hidden: false, addEventListener: (_: string, handler: () => Promise<void>) => { clicked = handler; } };
+  let next = 0;
+  const document = { getElementById: (id: string) => (id === "copy-status" ? status : { textContent: "x" }), querySelectorAll: () => [button] };
+  const navigator = { clipboard: { writeText: async () => { if (!outcomes[next++]) throw new Error("denied"); } } };
+  new Function("document", "navigator", "setTimeout", COPY_SCRIPT)(document, navigator, (run: () => void, ms: number) => timers.push({ at: now + ms, run, done: false }));
+  for (let i = 0; i < clicksAt.length; i++) {
+    now = clicksAt[i]!;
+    await clicked!();
+    const until = clicksAt[i + 1] ?? Infinity;
+    for (const timer of timers.filter((t) => !t.done && t.at <= until).sort((a, b) => a.at - b.at)) {
+      timer.done = true;
+      now = timer.at;
+      timer.run();
+    }
+  }
+  return log;
+}
+
+test("the copy script keeps its failure message and clears only a success message", async () => {
+  assert.deepEqual(await clickCopy([true], [0]), ["0:Copied.", "2500:"]);
+  const failed = await clickCopy([false], [0]);
+  assert.ok(failed.every((entry) => !entry.endsWith(":") || entry === "0:"), "a failure message is never cleared by a timer");
+  assert.equal(failed.at(-1)?.endsWith("Copy failed. Select the text and copy it."), true);
+});
+
+test("the copy script keeps the failure message of a click that follows a success within 2.5 s", async () => {
+  const log = await clickCopy([true, false], [0, 1000]);
+  assert.ok(log.at(-1)?.endsWith("Copy failed. Select the text and copy it."), log.join(" | "));
+});
+
+test("the copy script empties the live region before each failure so a repeated failure is announced again", async () => {
+  const log = await clickCopy([false, false], [0, 5000]);
+  const failures = log.filter((entry) => entry.endsWith("Copy failed. Select the text and copy it."));
+  assert.equal(failures.length, 2);
+  assert.ok(log[log.indexOf(failures[1]!) - 1]?.endsWith(":"), log.join(" | "));
 });
 
 test("every page opens its own browsing context group", () => {
