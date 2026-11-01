@@ -103,3 +103,18 @@ test("the only executable script of each page is the copy script", async () => {
     assert.deepEqual(executable, [COPY_SCRIPT], path);
   }
 });
+
+// Audit n° 27: RFC 9116 file. Two required fields (Contact, Expires), the date still ahead and under a year.
+test("security.txt names the contact and an expiry that is ahead, and stays out of the sitemap", async () => {
+  const response = seoFile("/.well-known/security.txt");
+  assert.equal(response?.status, 200);
+  assert.match(response?.headers.get("content-type") ?? "", /^text\/plain/);
+  const body = await response!.text();
+  const field = (name: string): string | undefined => body.match(new RegExp(`^${name}: (.+)$`, "m"))?.[1];
+  assert.equal(field("Contact"), `mailto:${BRAND.contactEmail}`);
+  assert.equal(field("Canonical"), `${BRAND.site}/.well-known/security.txt`);
+  const expires = Date.parse(field("Expires") ?? "");
+  assert.ok(expires > Date.now(), "expired: renew SECURITY_TXT_EXPIRES in src/worker/seo.ts");
+  assert.ok(expires - Date.now() < 366 * 86_400_000, "RFC 9116: under a year ahead");
+  assert.ok(!sitemapXml().includes("security.txt"));
+});

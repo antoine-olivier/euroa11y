@@ -250,6 +250,7 @@ function pageRoute(request: Request, url: URL, env: Env): Response | undefined {
     case "/robots.txt":
     case "/sitemap.xml":
     case "/llms.txt":
+    case "/.well-known/security.txt":
       return seoFile(url.pathname) ?? notFoundPage();
     case "/.well-known/openai-apps-challenge":
       return env.OPENAI_APPS_CHALLENGE ? text(200, env.OPENAI_APPS_CHALLENGE) : text(404, "Not found.");

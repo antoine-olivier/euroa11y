@@ -69,3 +69,17 @@ test("the copy script keeps its failure message and clears only a success messag
   assert.ok(timer.includes("if(ok)s.textContent=\"\""), "only a success message is cleared");
   assert.ok(COPY_SCRIPT.includes("catch{ok=0;"), "a failure marks the click as failed");
 });
+
+test("every page opens its own browsing context group", () => {
+  for (const response of [homePage("https://euroa11y.com/mcp"), docsPage("https://euroa11y.com/mcp"), privacyPage("2026-10-04"), termsPage("2026-10-04"), notFoundPage()]) {
+    assert.equal(response.headers.get("cross-origin-opener-policy"), "same-origin");
+  }
+});
+
+// A5-08 (QCM 2026-11-01): the H1 asks what the tool decides (scope), not whether the site is "ready".
+test("the home page H1 asks about the scope of the EAA and promises no readiness", async () => {
+  const html = await homePage("https://euroa11y.com/mcp").text();
+  assert.equal(html.match(/<h1>([^<]*)<\/h1>/g)?.length, 1);
+  assert.ok(html.includes("<h1>Does the European Accessibility Act apply to your business?</h1>"));
+  assert.ok(!/<h1>[^<]*ready/i.test(html));
+});

@@ -296,7 +296,7 @@ ${seoHead(title, description, current)}
 <main id="main">${body}</main>
 <footer><div class="wrap"><div><p>Independent service, not affiliated with the European Union or any EU institution.</p><p>Published by ${escapeHtml(BRAND.publisher)}, ${escapeHtml(BRAND.country)}. Contact: <a href="mailto:${BRAND.contactEmail}">${BRAND.contactEmail}</a></p></div><nav aria-label="Footer"><a href="/docs">Documentation</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer>
 <p class="sr-only" role="status" id="copy-status"></p><script>${COPY_SCRIPT}</script></body></html>`;
-  return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": status === 200 ? "public, max-age=3600" : "no-store", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "permissions-policy": PERMISSIONS, "content-security-policy": CSP } });
+  return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": status === 200 ? "public, max-age=3600" : "no-store", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "permissions-policy": PERMISSIONS, "cross-origin-opener-policy": "same-origin", "content-security-policy": CSP } });
 }
 
 /** "2026-10-04" as "4 October 2026", the date format of the pages. */
@@ -366,7 +366,7 @@ export function homePage(mcpUrl: string): Response {
     `<tr id="${scId(sc)}"><td class="sc-n">${sc}</td><td>${failure}<small>${detail.replace(/ (AA?)$/, "&nbsp;$1")}</small>${code}</td><td class="n">${elements}</td></tr>`;
   const index = wcagRing();
   return layout(`${BRAND.name}: accessibility and EAA checks in ChatGPT and Claude`, HOME_DESCRIPTION, "/",`<div class="blue"><div class="wrap hero">
-<h1>Is your site ready for the European Accessibility Act?</h1>
+<h1>Does the European Accessibility Act apply to your business?</h1>
 <div class="cta"><p class="lead">Ask ChatGPT or Claude. ${escapeHtml(BRAND.name)} tells whether the EAA applies to the business, then scans the page against WCAG 2.2 AA and lists what to fix. Free, no account.</p>
 ${connectorUrl(mcpUrl, "mcp-url")}
 <p class="how">Paste it as a connector into Claude, Free plan included, or into ChatGPT on the web with a Plus, Pro, Business, Enterprise or Education account. <a href="#connect">How to add it</a></p></div>

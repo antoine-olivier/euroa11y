@@ -72,10 +72,19 @@ If the assistant answers without ${name}, name it in the request.
 `;
 }
 
+/** End of validity of security.txt (RFC 9116 asks for a date under a year ahead): renew it before then, with the file's contents. */
+export const SECURITY_TXT_EXPIRES = "2027-10-31T00:00:00.000Z";
+
+/** RFC 9116 file: where to report a vulnerability of the service. Not a page: left out of the sitemap. */
+export function securityTxt(): string {
+  return `Contact: mailto:${BRAND.contactEmail}\nExpires: ${SECURITY_TXT_EXPIRES}\nPreferred-Languages: en, fr\nCanonical: ${absolute("/.well-known/security.txt")}\n`;
+}
+
 const FILES: Record<string, { body: () => string; type: string }> = {
   "/robots.txt": { body: () => robotsTxt(), type: "text/plain; charset=utf-8" },
   "/sitemap.xml": { body: sitemapXml, type: "application/xml; charset=utf-8" },
   "/llms.txt": { body: llmsTxt, type: "text/plain; charset=utf-8" },
+  "/.well-known/security.txt": { body: securityTxt, type: "text/plain; charset=utf-8" },
 };
 
 /** The response for one of the three files, or undefined for any other path. Same headers as the HTML pages. */
