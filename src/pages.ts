@@ -19,8 +19,8 @@ export const ICON_PATH = "/icon-512.png";
 
 // Copy buttons: each names the element whose text it copies. Any change to this text changes its hash:
 // test/pages.test.ts checks it.
-export const COPY_SCRIPT = `const s=document.getElementById("copy-status");for(const b of document.querySelectorAll("button[data-copy]")){const t=document.getElementById(b.dataset.copy),l=b.textContent;if(!navigator.clipboard||!t){b.hidden=true;continue}b.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(t.textContent.trim());b.textContent="Copied";b.dataset.done="";s.textContent=b.dataset.say}catch{b.textContent="Failed";s.textContent="Copy failed. Select the text and copy it."}setTimeout(()=>{b.textContent=l;delete b.dataset.done;s.textContent=""},2500)})}`;
-export const COPY_SCRIPT_HASH = "sha256-9TyCaGQhRCIXzdshqAkCCNu6A0RtEjGBjrm35/e3ehQ=";
+export const COPY_SCRIPT = `const s=document.getElementById("copy-status");for(const b of document.querySelectorAll("button[data-copy]")){const t=document.getElementById(b.dataset.copy),l=b.textContent;if(!navigator.clipboard||!t){b.hidden=true;continue}b.addEventListener("click",async()=>{let ok=1;try{await navigator.clipboard.writeText(t.textContent.trim());b.textContent="Copied";b.dataset.done="";s.textContent=b.dataset.say}catch{ok=0;b.textContent="Failed";s.textContent="Copy failed. Select the text and copy it."}setTimeout(()=>{b.textContent=l;delete b.dataset.done;if(ok)s.textContent=""},2500)})}`;
+export const COPY_SCRIPT_HASH = "sha256-JJrGHe+XbAsoGQdtAO1ZLBgLhnJPOSoClnr8xSed4Bc=";
 
 // The pages use no powerful API; clipboard-write stays allowed for the Copy buttons.
 const PERMISSIONS = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=(), display-capture=(), browsing-topics=()";

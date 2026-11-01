@@ -62,3 +62,10 @@ test("an unknown address gets an HTML page with status 404, not cached", async (
   assert.ok(html.includes('<a href="/docs">Documentation</a>'));
   assert.ok(!html.includes('aria-current="page"'));
 });
+
+// Audit A5-14: the "Copy failed" message stays in the live region until the next click; only a success is cleared.
+test("the copy script keeps its failure message and clears only a success message", () => {
+  const timer = COPY_SCRIPT.slice(COPY_SCRIPT.indexOf("setTimeout"));
+  assert.ok(timer.includes("if(ok)s.textContent=\"\""), "only a success message is cleared");
+  assert.ok(COPY_SCRIPT.includes("catch{ok=0;"), "a failure marks the click as failed");
+});
