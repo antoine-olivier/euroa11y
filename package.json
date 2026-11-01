@@ -22,7 +22,7 @@
     "@modelcontextprotocol/server": "2.3.0",
     "axe-core": "4.13.0",
     "playwright-core": "1.63.0",
-    "zod": "4.6.5"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261004.1",
