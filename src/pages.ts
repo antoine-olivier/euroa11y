@@ -272,7 +272,7 @@ tr:target td{animation:mark 2s ease-out both}}
 @media (max-width:340px){.brand{font-size:1.1rem}.bar nav{gap:0 10px;font-size:.8125rem}}
 @media (max-width:420px){.url{flex-direction:column;width:100%}.url code{font-size:1.05rem;padding:14px 16px}.url button{border-left:0;border-top:2px solid var(--navy);padding:12px;border-radius:0 0 3px 3px}}`;
 
-type Path = "/" | "/docs" | "/privacy" | "/terms" | "/rgaa-wcag" | "/eaa-checker";
+type Path = "/" | "/docs" | "/privacy" | "/terms" | "/rgaa-wcag" | "/eaa-checker" | "/accessibility";
 
 // Search and sharing metadata. The canonical address is the public site, whatever host served the page. The not-found
 // page (current null) has no canonical and asks not to be indexed. One language, so no hreflang.
@@ -316,7 +316,7 @@ ${seoHead(title, description, current)}
 <body><a class="skip" href="#main">Skip to content</a>
 <header class="blue site"><div class="wrap bar"><a class="brand" href="/"${current === "/" ? ' aria-current="page"' : ""}>EuroA<span>11</span>y</a><nav aria-label="Site">${link("/docs", "Documentation")}${link("/eaa-checker", "EAA checker")}${link("/privacy", "Privacy")}${link("/terms", "Terms")}</nav></div></header>
 <main id="main">${body}</main>
-<footer><div class="wrap"><div><p>Independent service, not affiliated with the European Union or any EU institution.</p><p>Published by ${escapeHtml(BRAND.publisher)}, ${escapeHtml(BRAND.country)}. Contact: <a href="mailto:${BRAND.contactEmail}">${BRAND.contactEmail}</a></p></div><nav aria-label="Footer"><a href="/docs">Documentation</a><a href="/eaa-checker">EAA checker</a><a href="/rgaa-wcag">RGAA and WCAG</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer>
+<footer><div class="wrap"><div><p>Independent service, not affiliated with the European Union or any EU institution.</p><p>Published by ${escapeHtml(BRAND.publisher)}, ${escapeHtml(BRAND.country)}. Contact: <a href="mailto:${BRAND.contactEmail}">${BRAND.contactEmail}</a></p></div><nav aria-label="Footer"><a href="/docs">Documentation</a><a href="/eaa-checker">EAA checker</a><a href="/rgaa-wcag">RGAA and WCAG</a><a href="/accessibility"${current === "/accessibility" ? ' aria-current="page"' : ""}>Accessibility</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer>
 <p class="sr-only" role="status" id="copy-status"></p><script>${COPY_SCRIPT}</script>${own ? `<script>${own.source}</script>` : ""}</body></html>`;
   return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": status === 200 ? "public, max-age=3600" : "no-store", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "permissions-policy": PERMISSIONS, "cross-origin-opener-policy": "same-origin", "content-security-policy": csp(own?.hash) } });
 }
@@ -675,6 +675,37 @@ export function termsPage(updated: string): Response {
 <p>The scan runs <a href="https://github.com/dequelabs/axe-core">axe-core</a> by Deque Systems, under the Mozilla Public License 2.0. This site uses the Atkinson Hyperlegible Next and Atkinson Hyperlegible Mono typefaces, under the SIL Open Font License 1.1.</p>
 <h2>Law and contact</h2>
 <p>These terms are governed by French law. If you use the service as a consumer, you keep the protection of the mandatory rules of the country where you live. Changes to these terms are published on this page with a new date. Questions: <a href="mailto:${BRAND.contactEmail}">${BRAND.contactEmail}</a>. See also the <a href="/privacy">privacy policy</a>.</p>
+</div></div>`);
+}
+
+/** Day of the last accessibility tests of this site (keyboard 2026-11-05, automated and reflow runs and NVDA reading 2026-11-07). */
+export const ACCESSIBILITY_TESTED = "2026-11-07";
+
+/**
+ * What has been tested for accessibility on this site, and what has not. It claims no conformance: each line is a
+ * test that was run, with its tool and day. Source of the lines: docs/2026-11-01-checklist-test-manuel.md and the
+ * runs of 2026-11-05 (keyboard) and 2026-11-07 (axe-core, reflow, NVDA). Edit a line only with a new run.
+ */
+export function accessibilityPage(): Response {
+  const contact = `<a href="mailto:${BRAND.contactEmail}">${BRAND.contactEmail}</a>`;
+  return layout(`Accessibility | ${BRAND.name}`, `What has been tested for accessibility on ${BRAND.site.replace("https://", "")}, with what and when, and what has not. No claim of conformance.`, "/accessibility", `${pageHead("Accessibility", "What has been tested on this site, with what and when, and what has not. This is not a claim of conformance.")}
+<div class="wrap"><div class="prose sheet">
+<p class="dated">Last tested: ${escapeHtml(longDate(ACCESSIBILITY_TESTED))}</p>
+<h2>Status</h2>
+<p>This site has not been audited against WCAG 2.2 level AA, and it makes no claim of conformance. It aims at level AA. The tests below are what has been checked so far. An automated test finds only part of the issues.</p>
+<h2>What was tested</h2>
+<ul><li><strong>Automated check.</strong> axe-core 4.13.0, WCAG 2.2 level A and AA rules, on the home page, the documentation, the EAA checker, the RGAA and WCAG page, the privacy policy, the terms, this page and the not-found page. Each was loaded in a wide and a narrow window, in a light and a dark colour scheme: 32 renderings. No violation was reported, on ${escapeHtml(longDate(ACCESSIBILITY_TESTED))}.</li>
+<li><strong>Reflow.</strong> In a window 320 pixels wide, none of those pages scrolls sideways, on ${escapeHtml(longDate(ACCESSIBILITY_TESTED))}.</li>
+<li><strong>Keyboard.</strong> The EAA checker and the RGAA and WCAG page, with the keyboard alone in a Chromium-based browser, on 5 November 2026. The "Skip to content" link comes first and works. Every link, button and field can be reached in reading order, with no trap, and the focus outline is visible. The EAA checker was filled in and submitted by keyboard, an error moves the focus to the message, and the result takes the focus.</li>
+<li><strong>Screen reader.</strong> A short reading of the EAA checker with NVDA 2026.3 and Chrome, on 7 November 2026. The page title, the banner, the "Site" navigation, the main region, the level 1 heading and the name of the first group of choices were announced.</li></ul>
+<h2>What was not tested</h2>
+<ul><li>Form errors, the announcement of the result and the other pages with a screen reader, and any screen reader other than NVDA, such as VoiceOver or TalkBack.</li>
+<li>The keyboard on the home page, the documentation, the privacy policy and the terms.</li>
+<li>Browser zoom at 200 % and 400 %, text spacing, Windows contrast themes, a phone and touch use.</li></ul>
+<h2>Known issue</h2>
+<p>The four tables of the RGAA and WCAG page have no caption of their own: the heading above each one gives its context. Whether this is enough for screen reader users has not been tested.</p>
+<h2>Report a problem</h2>
+<p>If a page of this site is hard to use, write to ${contact}. Please give the page, what you tried to do, and the browser and assistive technology you use. See also the <a href="/docs">documentation</a> and the <a href="/terms">terms of use</a>.</p>
 </div></div>`);
 }
 

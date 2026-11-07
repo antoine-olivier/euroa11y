@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { BRAND } from "../src/brand.ts";
 import { EAA_SCRIPT } from "../src/eaa-script.ts";
-import { COPY_SCRIPT, docsPage, eaaCheckerPage, homePage, notFoundPage, privacyPage, rgaaWcagPage, termsPage } from "../src/pages.ts";
+import { COPY_SCRIPT, accessibilityPage, docsPage, eaaCheckerPage, homePage, notFoundPage, privacyPage, rgaaWcagPage, termsPage } from "../src/pages.ts";
 import { RGAA_DATA_PATH } from "../src/rgaa.ts";
 import type { RgaaData } from "../src/rgaa-index.ts";
 import { PUBLIC_PATHS, llmsTxt, robotsTxt, seoFile, sitemapXml } from "../src/worker/seo.ts";
@@ -22,6 +22,8 @@ const render = (path: string): Response => {
       return rgaaWcagPage(RGAA);
     case "/eaa-checker":
       return eaaCheckerPage();
+    case "/accessibility":
+      return accessibilityPage();
     case "/privacy":
       return privacyPage("2026-10-04");
     case "/terms":

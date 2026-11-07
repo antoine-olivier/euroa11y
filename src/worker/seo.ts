@@ -4,7 +4,7 @@
 import { BRAND } from "../brand.ts";
 
 /** Public pages the Worker serves with status 200, in sitemap order. Test: test/seo.test.ts renders each one. */
-export const PUBLIC_PATHS = ["/", "/docs", "/eaa-checker", "/rgaa-wcag", "/privacy", "/terms"] as const;
+export const PUBLIC_PATHS = ["/", "/docs", "/eaa-checker", "/rgaa-wcag", "/accessibility", "/privacy", "/terms"] as const;
 
 const MCP_PATH = "/mcp";
 const absolute = (path: string): string => `${BRAND.site}${path}`;
@@ -69,6 +69,7 @@ If the assistant answers without ${name}, name it in the request.
 - [Documentation](${absolute("/docs")}): connection steps, parameters, verdicts and limits
 - [EAA checker](${absolute("/eaa-checker")}): a questionnaire that tells whether the European Accessibility Act covers a service or the microenterprise exemption applies; runs in the browser, not legal advice
 - [RGAA 4.1.2 and WCAG 2.2](${absolute("/rgaa-wcag")}): which RGAA criteria relate to each WCAG 2.2 level A and AA criterion ("related", not "equivalent")
+- [Accessibility](${absolute("/accessibility")}): what has been tested for accessibility on this site, with what and when, and what has not; no claim of conformance
 - [Privacy policy](${absolute("/privacy")}): what the service receives, why and for how long
 - [Terms of use](${absolute("/terms")}): a free, informational service
 `;

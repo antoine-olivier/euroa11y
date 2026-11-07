@@ -21,7 +21,7 @@ import { callerOf, createRangeList, type Caller } from "../callers.ts";
 import { createDohHostCheck } from "../dns-doh.ts";
 import { createHttpEntry, jsonRpcError, type HttpEntry } from "../mcp/http.ts";
 import { createMcpServer } from "../mcp/server.ts";
-import { docsPage, eaaCheckerPage, FAVICON_PATH, FONT_PATH, homePage, ICON_PATH, MONO_FONT_PATH, notFoundPage, privacyPage, rgaaWcagPage, termsPage } from "../pages.ts";
+import { accessibilityPage, docsPage, eaaCheckerPage, FAVICON_PATH, FONT_PATH, homePage, ICON_PATH, MONO_FONT_PATH, notFoundPage, privacyPage, rgaaWcagPage, termsPage } from "../pages.ts";
 import { buildRgaaIndex, type RgaaData } from "../rgaa-index.ts";
 import type { ScanRequest } from "../scan-core.ts";
 import type { Admission, BudgetLimits } from "./budget.ts";
@@ -224,8 +224,11 @@ function pageRoute(request: Request, url: URL, env: Env): Response | undefined {
       return rgaaWcagPage(rgaaData as RgaaData);
     case "/eaa-checker":
       return eaaCheckerPage();
+    case "/accessibility":
+      return accessibilityPage();
     case "/docs/":
     case "/eaa-checker/":
+    case "/accessibility/":
     case "/rgaa-wcag/":
     case "/privacy/":
     case "/terms/":
