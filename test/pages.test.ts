@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
-import { COPY_SCRIPT, COPY_SCRIPT_HASH, FONT_PATH, MONO_FONT_PATH, docsPage, homePage, notFoundPage, privacyPage, termsPage } from "../src/pages.ts";
+import { COPY_SCRIPT, COPY_SCRIPT_HASH, FONT_PATH, MONO_FONT_PATH, docsPage, eaaCheckerPage, homePage, notFoundPage, privacyPage, termsPage } from "../src/pages.ts";
 
 
 test("the CSP hash matches the copy script", () => {
@@ -29,6 +29,15 @@ test("every page allows and preloads the self-hosted fonts, restricts powerful A
     assert.ok(html.includes(`href="${MONO_FONT_PATH}" as="font"`), path);
     assert.ok(html.includes(`href="${path}" aria-current="page"`), path);
   }
+});
+
+test("the Site navigation of every page links the EAA checker, and marks it on its own page", async () => {
+  for (const response of [homePage("https://euroa11y.com/mcp"), docsPage("https://euroa11y.com/mcp"), privacyPage("2026-10-04"), termsPage("2026-10-04"), notFoundPage(), eaaCheckerPage()]) {
+    const nav = (await response.text()).match(/<nav aria-label="Site">(.*?)<\/nav>/)?.[1] ?? "";
+    assert.ok(/<a href="\/eaa-checker"[^>]*>EAA checker<\/a>/.test(nav), nav);
+    assert.ok(nav.indexOf("/docs") < nav.indexOf("/eaa-checker") && nav.indexOf("/eaa-checker") < nav.indexOf("/privacy"), nav);
+  }
+  assert.ok((await eaaCheckerPage().text()).includes('href="/eaa-checker" aria-current="page"'));
 });
 
 test("the home page ring links each failed criterion to its row, and its legend adds up to 55", async () => {

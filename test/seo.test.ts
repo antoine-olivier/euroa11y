@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { BRAND } from "../src/brand.ts";
-import { COPY_SCRIPT, docsPage, homePage, notFoundPage, privacyPage, rgaaWcagPage, termsPage } from "../src/pages.ts";
+import { EAA_SCRIPT } from "../src/eaa-script.ts";
+import { COPY_SCRIPT, docsPage, eaaCheckerPage, homePage, notFoundPage, privacyPage, rgaaWcagPage, termsPage } from "../src/pages.ts";
 import { RGAA_DATA_PATH } from "../src/rgaa.ts";
 import type { RgaaData } from "../src/rgaa-index.ts";
 import { PUBLIC_PATHS, llmsTxt, robotsTxt, seoFile, sitemapXml } from "../src/worker/seo.ts";
@@ -19,6 +20,8 @@ const render = (path: string): Response => {
       return docsPage(MCP);
     case "/rgaa-wcag":
       return rgaaWcagPage(RGAA);
+    case "/eaa-checker":
+      return eaaCheckerPage();
     case "/privacy":
       return privacyPage("2026-10-04");
     case "/terms":
@@ -101,16 +104,23 @@ test("the home page carries a free WebApplication in JSON-LD, with no rating or 
   for (const path of ["/docs", "/privacy", "/terms"]) assert.ok(!(await render(path).text()).includes("application/ld+json"), path);
 });
 
-// The CSP allows one script by hash; a JSON-LD block is data, not a script, so the only executable script stays the copy script.
-test("the only executable script of each page is the copy script", async () => {
+// The CSP allows each script by hash; a JSON-LD block is data, not a script, so the only executable scripts are the copy script
+// and, on /eaa-checker alone, the checker's.
+test("the only executable scripts are the copy script, plus the checker's on /eaa-checker", async () => {
   for (const path of PUBLIC_PATHS) {
     const html = await render(path).text();
     const executable = [...html.matchAll(/<script(?![^>]*type="application\/ld\+json")[^>]*>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
-    assert.deepEqual(executable, [COPY_SCRIPT], path);
+    assert.deepEqual(executable, path === "/eaa-checker" ? [COPY_SCRIPT, EAA_SCRIPT] : [COPY_SCRIPT], path);
   }
 });
 
 // Audit n° 29: /rgaa-wcag is a public page of the sitemap, linked from llms.txt.
+test("the sitemap and llms.txt list /eaa-checker", () => {
+  assert.ok(PUBLIC_PATHS.includes("/eaa-checker"));
+  assert.ok(sitemapXml().includes(`<loc>${BRAND.site}/eaa-checker</loc>`));
+  assert.ok(llmsTxt().includes(`(${BRAND.site}/eaa-checker)`));
+});
+
 test("the sitemap and llms.txt list /rgaa-wcag", () => {
   assert.ok(PUBLIC_PATHS.includes("/rgaa-wcag"));
   assert.ok(sitemapXml().includes(`<loc>${BRAND.site}/rgaa-wcag</loc>`));

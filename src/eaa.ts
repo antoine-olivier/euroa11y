@@ -84,6 +84,27 @@ const TERMINALS_ONLY = [
   "If the website or app sells tickets or passes to consumers, that is an e-commerce service (art. 3(30), recital 35): check it again with sector e_commerce.",
 ];
 
+const OTHER_REASONS = [
+  "The EAA covers these consumer services (art. 2(2)): e-commerce, consumer banking, e-books, electronic communications, access to audiovisual media, and passenger transport; and answering emergency calls to 112 (art. 2(3)).",
+  "If consumers can order, book or subscribe through the website or app, that is an e-commerce service (art. 3(30)): check it again with sector e_commerce.",
+  "Products (computers, smartphones, self-service terminals, e-readers…) have their own requirements, not assessed here.",
+];
+
+/**
+ * The texts the /eaa-checker page script needs to give the same answer as checkEaaScope in the visitor's browser
+ * (test/eaa-checker-page.test.ts runs the script against checkEaaScope over every combination of answers).
+ */
+export const EAA_PAGE_DATA = {
+  sectorLabels: SECTOR_LABELS,
+  sources: SOURCES,
+  keyDates: KEY_DATES,
+  disclaimer: DISCLAIMER,
+  publicSector: PUBLIC_SECTOR,
+  counting: COUNTING,
+  terminalsOnly: TERMINALS_ONLY,
+  otherReasons: OTHER_REASONS,
+};
+
 export interface EaaReminder {
   rule: string[];
   next_step: string;
@@ -110,12 +131,8 @@ export function checkEaaScope(input: EaaInput): EaaResult {
   if (input.sector === "other" || !input.sells_to_eu_consumers) {
     const reasons =
       input.sector === "other"
-        ? [
-            "The EAA covers these consumer services (art. 2(2)): e-commerce, consumer banking, e-books, electronic communications, access to audiovisual media, and passenger transport; and answering emergency calls to 112 (art. 2(3)).",
-            "If consumers can order, book or subscribe through the website or app, that is an e-commerce service (art. 3(30)): check it again with sector e_commerce.",
-            "Products (computers, smartphones, self-service terminals, e-readers…) have their own requirements, not assessed here.",
-          ]
-        : [`The EAA covers ${SECTOR_LABELS[input.sector]} provided to consumers in the EU (art. 2(2)); a business-to-business-only service is not covered.`];
+        ? OTHER_REASONS
+        :[`The EAA covers ${SECTOR_LABELS[input.sector]} provided to consumers in the EU (art. 2(2)); a business-to-business-only service is not covered.`];
     if (input.public_body) return result("public_sector_other_law", [`${PUBLIC_SECTOR}; the EAA adds its requirements only for the consumer services it lists (recital 46).`, ...reasons]);
     return result("out_of_scope", reasons);
   }

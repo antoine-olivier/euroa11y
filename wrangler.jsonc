@@ -46,7 +46,7 @@
   // most 1.4 $ of rounding. The Workers Paid subscription (5 $) comes on top.
   "vars": {
     "DAILY_BROWSER_SECONDS": "64000",
-    "POLICY_DATE": "2026-10-11"
+    "POLICY_DATE": "2026-11-07"
   },
   // CPU time per request, waiting on the browser excluded; 30 s is the platform's default. Every browser protocol
   // message is decoded here, so a page can raise it: a lower cap cut short would skip the scan's `finally`

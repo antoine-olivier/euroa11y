@@ -6,6 +6,8 @@
 // as a11y and ally must; the WCAG 2.2 AA index of the home page is drawn from the bundled axe catalog.
 import { AXE_CATALOG_VERSION, axeRule, axeRuleIds } from "./axe-catalog.ts";
 import { BRAND } from "./brand.ts";
+import { EAA_REMINDER, EAA_SECTORS } from "./eaa.ts";
+import { EAA_SCRIPT, EAA_SCRIPT_HASH } from "./eaa-script.ts";
 import { RESCAN_AFTER_MS } from "./scan-core.ts";
 import type { RgaaCriterion, RgaaData } from "./rgaa-index.ts";
 import { CRITERIA, NEW_IN_WCAG22, WCAG22_AA_TAGS, compareCriteria, criteriaFromTags, describeCriterion } from "./wcag.ts";
@@ -25,7 +27,9 @@ export const COPY_SCRIPT_HASH = "sha256-YYYCZMNxvewFyQPSTUPHlZO+LC6G3DzJiLsrUwzJ
 
 // The pages use no powerful API; clipboard-write stays allowed for the Copy buttons.
 const PERMISSIONS = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=(), display-capture=(), browsing-topics=()";
-const CSP = `default-src 'none'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self'; script-src '${COPY_SCRIPT_HASH}'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`;
+// A page with a script of its own (the /eaa-checker one) adds that script's hash. No connect-src and form-action 'none':
+// what a visitor types into the checker cannot be sent anywhere.
+const csp = (extraHash?: string) => `default-src 'none'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self'; script-src '${COPY_SCRIPT_HASH}'${extraHash ? ` '${extraHash}'` : ""}; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`;
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char] ?? char);
@@ -239,6 +243,19 @@ tr:target td{background:var(--mark)}
 .map ul{margin:0;padding:0;list-style:none}.map td li{margin:0 0 .5em}.map td li:last-child{margin:0}.map .rid{font:700 1rem var(--mono);color:var(--accent);margin-right:6px}.none{color:var(--soft)}
 @media (max-width:600px){.map th[scope=row]{width:42%}}
 .lost{margin-block:8px 96px;padding:clamp(24px,4vw,48px);max-width:46rem}.lost ul{padding-left:1.2em}
+.eaa{margin-block:8px 88px;padding:clamp(24px,4vw,56px);--btn:#fff}
+@media (prefers-color-scheme:dark){.eaa{--btn:#0a1238}}
+.eaa h2{font-size:clamp(1.6rem,1.3rem + 1vw,2.15rem);margin:2em 0 .5em}.eaa h2:first-child{margin-top:0}.eaa p{max-width:62ch}
+.eaa fieldset{border:0;margin:0 0 28px;padding:0;min-width:0}.eaa legend{font-weight:800;font-size:1.15rem;padding:0;margin-bottom:8px}
+.eaa .hint{color:var(--soft);font-size:.95rem;margin:0 0 8px}
+.eaa .opt{display:flex;align-items:flex-start;gap:12px;padding:8px 0}.eaa .opt input{flex:none;width:1.5rem;height:1.5rem;margin:.1rem 0 0;accent-color:var(--accent)}.eaa .opt label{cursor:pointer}
+.eaa .fld{margin:0 0 22px;max-width:26rem}.eaa .fld label{display:block;font-weight:700}.eaa .fld .hint{margin:2px 0 6px}
+.eaa input[type=text]{font:inherit;color:var(--ink);background:transparent;border:2px solid var(--soft);border-radius:3px;padding:10px 12px;width:100%}
+.eaa input[aria-invalid=true]{border-color:var(--crit)}.eaa .err{color:var(--crit);font-weight:700;margin:6px 0 0}
+.eaa button{border:0;border-radius:3px;background:var(--accent);color:var(--btn);font:800 1.05rem var(--sans);padding:14px 28px;cursor:pointer}.eaa button:hover{text-decoration:underline}
+#eaa-result{margin-top:36px;padding-top:24px;border-top:6px solid var(--yellow)}
+#eaa-verdict{font-size:clamp(1.8rem,1.3rem + 1.6vw,2.6rem);line-height:1.1;letter-spacing:-.025em;margin:0 0 16px}#eaa-verdict:focus-visible{outline-offset:6px}
+#eaa-result ul{padding-left:1.2em;max-width:62ch}#eaa-result li{margin:0 0 .6em}#eaa-result h3{margin:1.6em 0 .5em;font-size:1.2rem}
 footer{color:var(--mist);font-size:.95rem}footer .wrap{background:linear-gradient(var(--rule),var(--rule)) top center/calc(100% - 2*var(--gutter)) 1px no-repeat;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 40px;padding-block:32px}footer p{margin:0 0 4px}footer a{color:#fff}footer nav{display:flex;gap:0 22px;flex-wrap:wrap}
 @media (forced-colors:active){.pick input:checked+label{forced-color-adjust:none;background:Highlight;color:HighlightText}.ring .auto,.ring .manual{stroke:CanvasText}.ring .fail{stroke:Highlight}.ring a:is(:hover,:focus-visible) .fail{stroke:LinkText}.ring .p{fill:CanvasText}.legend i{background:CanvasText}.legend .fail{background:Highlight}.bar nav a[aria-current=page]{text-decoration:underline}code{border:1px solid CanvasText}}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}
@@ -255,7 +272,7 @@ tr:target td{animation:mark 2s ease-out both}}
 @media (max-width:340px){.brand{font-size:1.1rem}.bar nav{gap:0 10px;font-size:.8125rem}}
 @media (max-width:420px){.url{flex-direction:column;width:100%}.url code{font-size:1.05rem;padding:14px 16px}.url button{border-left:0;border-top:2px solid var(--navy);padding:12px;border-radius:0 0 3px 3px}}`;
 
-type Path = "/" | "/docs" | "/privacy" | "/terms" | "/rgaa-wcag";
+type Path = "/" | "/docs" | "/privacy" | "/terms" | "/rgaa-wcag" | "/eaa-checker";
 
 // Search and sharing metadata. The canonical address is the public site, whatever host served the page. The not-found
 // page (current null) has no canonical and asks not to be indexed. One language, so no hreflang.
@@ -290,18 +307,18 @@ function seoHead(title: string, description: string, current: Path | null): stri
   return `<title>${t}</title><meta name="description" content="${d}">${current === null ? '<meta name="robots" content="noindex">' : share}${current === "/" ? homeJsonLd(description) : ""}`;
 }
 
-function layout(title: string, description: string, current: Path | null, body: string, status = 200): Response {
+function layout(title: string, description: string, current: Path | null, body: string, status = 200, own?: { source: string; hash: string }): Response {
   const link = (href: Path, label: string) => `<a href="${href}"${href === current ? ' aria-current="page"' : ""}>${label}</a>`;
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 ${seoHead(title, description, current)}
 <meta name="theme-color" content="#003399"><link rel="icon" href="${FAVICON_PATH}" type="image/svg+xml">
 <link rel="preload" href="${FONT_PATH}" as="font" type="font/woff2" crossorigin><link rel="preload" href="${MONO_FONT_PATH}" as="font" type="font/woff2" crossorigin><style>${STYLE}</style></head>
 <body><a class="skip" href="#main">Skip to content</a>
-<header class="blue site"><div class="wrap bar"><a class="brand" href="/"${current === "/" ? ' aria-current="page"' : ""}>EuroA<span>11</span>y</a><nav aria-label="Site">${link("/docs", "Documentation")}${link("/privacy", "Privacy")}${link("/terms", "Terms")}</nav></div></header>
+<header class="blue site"><div class="wrap bar"><a class="brand" href="/"${current === "/" ? ' aria-current="page"' : ""}>EuroA<span>11</span>y</a><nav aria-label="Site">${link("/docs", "Documentation")}${link("/eaa-checker", "EAA checker")}${link("/privacy", "Privacy")}${link("/terms", "Terms")}</nav></div></header>
 <main id="main">${body}</main>
-<footer><div class="wrap"><div><p>Independent service, not affiliated with the European Union or any EU institution.</p><p>Published by ${escapeHtml(BRAND.publisher)}, ${escapeHtml(BRAND.country)}. Contact: <a href="mailto:${BRAND.contactEmail}">${BRAND.contactEmail}</a></p></div><nav aria-label="Footer"><a href="/docs">Documentation</a><a href="/rgaa-wcag">RGAA and WCAG</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer>
-<p class="sr-only" role="status" id="copy-status"></p><script>${COPY_SCRIPT}</script></body></html>`;
-  return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": status === 200 ? "public, max-age=3600" : "no-store", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "permissions-policy": PERMISSIONS, "cross-origin-opener-policy": "same-origin", "content-security-policy": CSP } });
+<footer><div class="wrap"><div><p>Independent service, not affiliated with the European Union or any EU institution.</p><p>Published by ${escapeHtml(BRAND.publisher)}, ${escapeHtml(BRAND.country)}. Contact: <a href="mailto:${BRAND.contactEmail}">${BRAND.contactEmail}</a></p></div><nav aria-label="Footer"><a href="/docs">Documentation</a><a href="/eaa-checker">EAA checker</a><a href="/rgaa-wcag">RGAA and WCAG</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer>
+<p class="sr-only" role="status" id="copy-status"></p><script>${COPY_SCRIPT}</script>${own ? `<script>${own.source}</script>` : ""}</body></html>`;
+  return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": status === 200 ? "public, max-age=3600" : "no-store", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "permissions-policy": PERMISSIONS, "cross-origin-opener-policy": "same-origin", "content-security-policy": csp(own?.hash) } });
 }
 
 /** "2026-10-04" as "4 October 2026", the date format of the pages. */
@@ -460,7 +477,7 @@ ${CHATGPT_STEPS}
 <h3>When there is no report</h3>
 <p>The tool returns an error message instead of a misleading report when the page cannot be scanned: private, local or reserved address; port other than 80 or 443; unknown domain; HTTP status 400 or above; a bot-protection page (for example Cloudflare, DataDome or Akamai); a page that does not load in time; or one of the <a href="#limits">limits</a> reached, in which case the message says when to try again.</p>
 <h2 id="check-eaa-scope">check_eaa_scope</h2>
-<p>Applies the scope rules of <a href="https://eur-lex.europa.eu/eli/dir/2019/882/oj/eng">Directive (EU) 2019/882</a>, applicable since 28 June 2025, to the figures given. No network access, nothing stored.</p>
+<p>Applies the scope rules of <a href="https://eur-lex.europa.eu/eli/dir/2019/882/oj/eng">Directive (EU) 2019/882</a>, applicable since 28 June 2025, to the figures given. No network access, nothing stored. The same rule runs in your browser on the <a href="/eaa-checker">EAA checker</a> page.</p>
 <h3>Parameters</h3>
 <ul><li><code>sector</code> (required): the consumer service to check. For a business offering several of them, the assistant calls the tool once per service.
 <ul><li><code>e_commerce</code>: consumers can conclude a contract through the website or app (order, book, subscribe), whatever the trade.</li>
@@ -536,6 +553,61 @@ ${tables}
   );
 }
 
+const SECTOR_CHOICES: Record<(typeof EAA_SECTORS)[number], string> = {
+  e_commerce: "Selling to consumers online (e-commerce): they can order, book or subscribe on your website or app",
+  consumer_banking: "Consumer banking services",
+  e_books: "E-books and the software to read them",
+  electronic_communications: "Electronic communications: telephone, messaging, internet access",
+  audiovisual_media_access: "Access to audiovisual media services (streaming, video on demand)",
+  passenger_transport: "Air, bus and coach, rail or waterborne passenger transport",
+  urban_regional_transport: "Urban, suburban or regional transport",
+  other: "Something else, not in this list",
+};
+
+/**
+ * /eaa-checker (audit n° 29): the questionnaire of check_eaa_scope, answered in the browser. The decision is src/eaa.ts, ported
+ * in src/eaa-script.ts and tested against it; no figure is sent anywhere (CSP without connect-src, form-action 'none'). Without
+ * script the form stays hidden and the page gives the rule and the tool.
+ */
+export function eaaCheckerPage(): Response {
+  const radios = (name: string, choices: Array<[string, string]>) =>
+    choices.map(([value, label], index) => `<div class="opt"><input type="radio" name="${name}" value="${value}" id="${index === 0 ? `eaa-${name}-first` : `eaa-${name}-${value}`}"><label for="${index === 0 ? `eaa-${name}-first` : `eaa-${name}-${value}`}">${escapeHtml(label)}</label></div>`).join("");
+  const field = (id: string, label: string, hint: string) => `<div class="fld"><label for="${id}">${label}</label><p class="hint" id="${id}-hint">${hint}</p><input type="text" id="${id}" inputmode="numeric" autocomplete="off" aria-describedby="${id}-hint"><p class="err" id="${id}-err" hidden></p></div>`;
+  return layout(
+    `EAA checker: does the EAA apply to you? | ${BRAND.name}`,
+    "Answer a few questions to see whether the European Accessibility Act covers your service or the microenterprise exemption applies. Runs in your browser.",
+    "/eaa-checker",
+    `${pageHead("EAA checker: does the European Accessibility Act apply to your business?", "A few answers give a reading of the scope rules of Directive (EU) 2019/882, applicable since 28 June 2025. It runs in your browser: what you type is sent nowhere.")}
+<div class="wrap"><div class="eaa sheet">
+<h2 id="check">Check your business</h2>
+<p id="eaa-nojs">This check needs JavaScript. Without it, read the rule below, or ask an assistant connected to ${escapeHtml(BRAND.name)} to run the <code>check_eaa_scope</code> tool: see the <a href="/docs#check-eaa-scope">documentation</a>.</p>
+<form id="eaa-form" novalidate hidden aria-labelledby="check">
+<fieldset aria-describedby="eaa-sector-hint"><legend>Which consumer service do you provide?</legend><p class="hint" id="eaa-sector-hint">If you provide several, check them one at a time.</p>${radios("sector", EAA_SECTORS.map((sector) => [sector, SECTOR_CHOICES[sector]]))}</fieldset>
+<fieldset><legend>Do you offer it to consumers in the EU?</legend>${radios("consumers", [["yes", "Yes, to consumers"], ["no", "No, to businesses only, or outside the EU"]])}</fieldset>
+<fieldset aria-describedby="eaa-about-hint"><legend>About the business</legend><p class="hint" id="eaa-about-hint">Headcount and turnover only matter for the microenterprise exemption. Leave a field empty if you do not know it.</p>
+<div class="opt"><input type="checkbox" name="publicbody" id="eaa-publicbody"><label for="eaa-publicbody">It is a public-sector body</label></div>
+${field("eaa-employees", "Number of people employed", "A whole number. Count the people of partner and linked enterprises too.")}
+${field("eaa-turnover", "Annual turnover, in euros, excluding VAT", "Digits only, for example 1200000.")}
+${field("eaa-balance", "Balance sheet total, in euros", "Digits only. One of the two figures is enough if it is at or below 2 million.")}</fieldset>
+<button type="submit">Check the scope</button>
+</form>
+<section id="eaa-result" aria-labelledby="eaa-verdict" hidden>
+<h2 id="eaa-verdict" tabindex="-1">Result</h2>
+<ul id="eaa-reasons"></ul>
+<div id="eaa-more"><h3>Key dates</h3><ul id="eaa-dates"></ul><h3>Sources</h3><ul id="eaa-sources"></ul><p class="src" id="eaa-disc"></p></div>
+</section>
+<h2 id="rule">The rule in short</h2>
+${EAA_REMINDER.rule.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("\n")}
+<h2 id="limits">What this check does not do</h2>
+<p>It gives an informational reading of the directive, not legal advice. It does not cover products (computers, smartphones, e-readers, self-service terminals), the national penalties and procedures of each country, or whether a website meets the accessibility requirements: for that, <a href="/">scan a page</a>, then have the result reviewed by a person.</p>
+<h2 id="assistant">Prefer to ask an assistant?</h2>
+<p>The same rule is the <code>check_eaa_scope</code> tool of ${escapeHtml(BRAND.name)}, for Claude, ChatGPT and other MCP clients. <a href="/#connect">Add it to Claude or ChatGPT</a>, or read the <a href="/docs#check-eaa-scope">documentation</a> of the tool.</p>
+</div></div>`,
+    200,
+    { source: EAA_SCRIPT, hash: EAA_SCRIPT_HASH },
+  );
+}
+
 // Each statement must match the code and the Cloudflare set-up, as read on 2026-10-05: Worker log lines hold
 // the MCP method and tool name only (src/worker/index.ts), the raw result stays 24 h encrypted in the cache
 // of the data centre (src/worker/scan-cache.ts), Workers Logs keep 7 days on Workers Paid, the Cloudflare DPA
@@ -560,6 +632,7 @@ export function privacyPage(updated: string): Response {
 <ul><li>The page is loaded in a browser, as a visitor would see it, to run the accessibility check. Nothing is submitted to it.</li>
 <li>To run the check, that browser downloads the axe-core program from euroa11y.com itself, not from a third-party network.</li>
 <li>The report returned to the assistant contains the page title, its final address, and short HTML excerpts of the failing elements. If the page itself shows personal data, an excerpt may contain it.</li>
+<li>The <a href="/eaa-checker">EAA checker page</a> works in your browser: what you type into it is not sent to the service.</li>
 <li>The EAA check only applies rules to the figures given: it opens no page and stores nothing.</li></ul>
 <h2>Purposes, legal basis and retention</h2>
 <p>Each processing relies on the publisher's legitimate interest (GDPR article 6(1)(f)), stated below.</p>
